@@ -6,7 +6,7 @@ import asyncer
 from azure.storage.blob.aio import BlobServiceClient, ContainerClient
 from azure.storage.blob.aio._blob_client_async import BlobClient
 
-from azaux.storage_resource_manager import StorageResourceManager
+from azhacks.storage_resource_manager import StorageResourceManager
 
 
 class ServiceKwargs(TypedDict, total=False):

@@ -3,7 +3,7 @@ from typing import Self, override
 from azure.data.tables import TableEntity
 from azure.data.tables.aio import TableClient, TableServiceClient
 
-from azaux.storage_resource_manager import StorageResourceManager
+from azhacks.storage_resource_manager import StorageResourceManager
 
 
 class TableManager(StorageResourceManager):

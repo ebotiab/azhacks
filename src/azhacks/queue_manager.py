@@ -3,7 +3,7 @@ from typing import Self, override
 import asyncer
 from azure.storage.queue.aio import QueueClient, QueueServiceClient
 
-from azaux.storage_resource_manager import StorageResourceManager
+from azhacks.storage_resource_manager import StorageResourceManager
 
 
 class QueueManager(StorageResourceManager):

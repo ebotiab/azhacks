@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "asyncer>=0.0.8",
     "azure-data-tables>=12.6.0",
     "azure-storage-blob>=12.24.0",
     "azure-storage-queue>=12.12.0",
