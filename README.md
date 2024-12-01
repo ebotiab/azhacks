@@ -37,7 +37,10 @@ from azhacks.queue_manager import QueueManager
 from azhacks.storage_resource_manager import StorageResourceManager
 from azhacks.table_manager import TableManager
 
-# Initialize managers as needed for your use case
+# Initialize managers as needed for your use case, for example:
+async with ContainerManager("container", "account", "api-key") as container_manager:
+    # Use container_manager for container management operations
+    pass
 ```
 
 ## License
