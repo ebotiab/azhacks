@@ -87,12 +87,6 @@ jobs:
       - name: Build source and wheel distribution
         run: uv build
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
   pypi_publish:
     name: Upload release to PyPI
     needs: [setup_and_build, details]
@@ -102,14 +96,8 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Build source and wheel distribution
+        run: uv publish
 
   github_release:
     name: Create GitHub Release
