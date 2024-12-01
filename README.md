@@ -1,6 +1,6 @@
-# Azaux
+# Azhacks
 
-Azaux is a Python package that provides a collection of management utilities for handling containers, queues, storage resources, and tables.
+Azhacks is a Python package that provides a collection of management utilities for handling containers, queues, storage resources, and tables.
 
 ## Features
 
@@ -12,7 +12,7 @@ Azaux is a Python package that provides a collection of management utilities for
 ## Installation
 
 ```bash
-pip install azaux
+pip install azhacks
 ```
 
 ## Requirements
@@ -21,8 +21,8 @@ pip install azaux
 
 ## Project Structure
 
-```
-src/azaux/
+```bash
+src/azhacks/
 ├── container_manager.py     # Container management functionality
 ├── queue_manager.py        # Queue management operations
 ├── storage_resource_manager.py  # Storage resource handling
@@ -32,10 +32,10 @@ src/azaux/
 ## Usage
 
 ```python
-from azaux.container_manager import ContainerManager
-from azaux.queue_manager import QueueManager
-from azaux.storage_resource_manager import StorageResourceManager
-from azaux.table_manager import TableManager
+from azhacks.container_manager import ContainerManager
+from azhacks.queue_manager import QueueManager
+from azhacks.storage_resource_manager import StorageResourceManager
+from azhacks.table_manager import TableManager
 
 # Initialize managers as needed for your use case
 ```
