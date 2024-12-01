@@ -69,6 +69,11 @@ jobs:
   setup_and_build:
     needs: [details, check_pypi]
     runs-on: ubuntu-latest
+    environment:
+      name: release
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -87,21 +92,12 @@ jobs:
       - name: Build source and wheel distribution
         run: uv build
 
-  pypi_publish:
-    name: Upload release to PyPI
-    needs: [setup_and_build, details]
-    runs-on: ubuntu-latest
-    environment:
-      name: release
-    permissions:
-      id-token: write
-    steps:
-      - name: Build source and wheel distribution
+      - name: Publish distribution to PyPI
         run: uv publish
 
   github_release:
     name: Create GitHub Release
-    needs: [setup_and_build, details, pypi_publish]
+    needs: [setup_and_build, details]
     runs-on: ubuntu-latest
     permissions:
       contents: write
