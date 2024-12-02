@@ -12,6 +12,8 @@ class StorageResourceManager(ABC):
     :param api_key: The API key for the Azure Storage account.
     """
 
+    ACCOUNT_REQUIRED_ERROR = "Account name is required"
+
     class InvalidConnectionStringError(ValueError):
         """Exception raised when an Azure Storage connection string is invalid."""
 
@@ -41,6 +43,8 @@ class StorageResourceManager(ABC):
 
     def _get_endpoint(self, resource_type: Literal["blob", "queue", "table"]) -> str:
         """Return the endpoint URL for the storage resource."""
+        if not self.account:
+            raise ValueError(self.ACCOUNT_REQUIRED_ERROR)
         return f"https://{self.account}.{resource_type}.core.windows.net"
 
     @abstractmethod

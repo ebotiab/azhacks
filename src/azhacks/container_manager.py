@@ -91,16 +91,20 @@ class ContainerManager(StorageResourceManager):
         :return: The BlobClients for the uploaded blobs.
         """
         soon_values: list[asyncer.SoonValue[BlobClient]] = []
+        client = self._get_client()
         async with asyncer.create_task_group() as tg:
             for i, pth in enumerate(filepaths):
                 blb = blob_paths[i] if blob_paths else pth
-                blob_client = self._get_client().get_blob_client(blb.as_posix())
+                blob_client = client.get_blob_client(blb.as_posix())
                 if not await blob_client.exists():
                     soon_values.append(tg.soonify(self.upload)(pth, blb))
         return [sv.value for sv in soon_values]
 
     async def sync_with_folder(
-        self, folder: Path, blob_folder: Path | None = None, pattern: str = "**/*"
+        self,
+        folder: Path,
+        blob_folder: Path | None = None,
+        suffixes: list[str] | None = None,
     ) -> list[BlobClient]:
         """Sync a folder with a blob storage container folder.
 
@@ -115,9 +119,11 @@ class ContainerManager(StorageResourceManager):
         existing_blobs = {blb.name async for blb in client.list_blobs(blob_prefix)}
         tasks: list[asyncer.SoonValue[BlobClient]] = []
         async with asyncer.create_task_group() as tg:
-            for pth in folder.glob(pattern):
+            for pth in folder.glob("**/*"):
                 blob_path = blob_folder / pth.relative_to(folder)
-                if pth.is_file() and blob_path not in existing_blobs:
+                is_valid_suffix = pth.suffix not in suffixes if suffixes else True
+                does_not_exist = str(blob_path) not in existing_blobs
+                if pth.is_file() and is_valid_suffix and does_not_exist:
                     tasks.append(tg.soonify(self.upload)(pth, blob_path))
         return [t.value for t in tasks]
 
