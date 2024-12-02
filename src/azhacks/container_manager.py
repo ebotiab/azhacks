@@ -70,23 +70,6 @@ class ContainerManager(StorageResourceManager):
             self._client_cache = service_client.get_container_client(self.container)
         return self._client_cache
 
-    async def download(self, blob_path: Path) -> bytes:
-        """Retrieve data from a given blob file within the container.
-
-        :param blob_path: The path of the blob file.
-        :param use_chunks: Whether to use chunking to download the blob.
-        :return: The content of the blob.
-        """
-        downloader = await self._get_client().download_blob(
-            str(blob_path), encoding=None
-        )
-        return await downloader.readall()  # NOTE: to decode bytes.decode(encoding)
-
-    async def download_to_file(self, blob_path: Path, filepath: Path) -> None:
-        """Download a blob from the container to a file."""
-        async with await anyio.open_file(filepath, mode="wb") as f:
-            await f.write(await self.download(blob_path))
-
     async def upload(self, filepath: Path, blob_path: Path | None = None) -> BlobClient:
         """Upload a file to a blob.
 
@@ -117,17 +100,58 @@ class ContainerManager(StorageResourceManager):
         return [sv.value for sv in soon_values]
 
     async def sync_with_folder(
-        self, folder: Path, pattern: str = "**/*"
+        self, folder: Path, blob_folder: Path | None = None, pattern: str = "**/*"
     ) -> list[BlobClient]:
-        """Sync a folder with the blob storage container."""
-        existing_blobs = {
-            blb.name async for blb in self._get_client().list_blobs(folder.name + "/")
-        }
+        """Sync a folder with a blob storage container folder.
+
+        :param folder: The folder to sync with the blob storage container.
+        :param blob_folder: The folder in the blob storage to sync with.
+        If not provided, the files will be synced to the root of the container.
+        :param pattern: The pattern to match files in the folder.
+        """
+        blob_folder = blob_folder or Path()
+        client = self._get_client()
+        blob_prefix = blob_folder.name + "/" if str(blob_folder) else ""
+        existing_blobs = {blb.name async for blb in client.list_blobs(blob_prefix)}
         tasks: list[asyncer.SoonValue[BlobClient]] = []
         async with asyncer.create_task_group() as tg:
             for pth in folder.glob(pattern):
-                if pth.is_file():
-                    blb_path = pth.relative_to(folder.parent)
-                    if str(blb_path) not in existing_blobs:
-                        tasks.append(tg.soonify(self.upload)(pth, blb_path))
+                blob_path = blob_folder / pth.relative_to(folder)
+                if pth.is_file() and blob_path not in existing_blobs:
+                    tasks.append(tg.soonify(self.upload)(pth, blob_path))
         return [t.value for t in tasks]
+
+    async def download_bytes(self, blob_path: Path) -> bytes:
+        """Retrieve data from a given blob file within the container."""
+        client = self._get_client()
+        downloader = await client.download_blob(str(blob_path), encoding=None)
+        return await downloader.readall()  # NOTE: to decode bytes.decode(encoding)
+
+    async def download(self, blob_path: Path, save_path: Path | None = None) -> None:
+        """Download a blob from the container to a file."""
+        save_path = save_path or Path.cwd() / blob_path
+        async with await anyio.open_file(save_path, mode="wb") as f:
+            await f.write(await self.download_bytes(blob_path))
+
+    async def download_folder(
+        self, blob_folder: Path, save_folder: Path | None = None
+    ) -> None:
+        """Download all blobs in a folder from the container to a local folder.
+
+        :param blob_folder: The folder in the blob storage to download from.
+        If not provided, all blobs in the container will be downloaded.
+        :param save_folder: The folder to save the downloaded blobs to.
+        If not provided, the blobs will be downloaded to the current working
+        directory.
+        """
+        blob_prefix = blob_folder.name + "/" if blob_folder else ""
+        save_folder = save_folder or Path.cwd()
+        async with asyncer.create_task_group() as tg:
+            async for blob in self._get_client().list_blobs(blob_prefix):
+                filepath = save_folder / blob.name
+                await anyio.Path(filepath.parent).mkdir(parents=True, exist_ok=True)
+                tg.soonify(self.download)(Path(blob.name), filepath)
+
+    async def download_all(self, save_folder: Path) -> None:
+        """Download all blobs in the container to a local folder."""
+        await self.download_folder(Path(), save_folder)
